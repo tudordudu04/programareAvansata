@@ -8,19 +8,24 @@ public class homework {
         }
     }
     public static void main(String[] args) {
+
         long startTime = System.nanoTime();
+
         if(args.length != 2){
             System.out.println("Didn't enter 2 arguments");
             System.exit(-1);
         }
+
         int nrNodes = Integer.parseInt(args[0]);
         int clique = Integer.parseInt(args[1]);
-        int ok = 1;
+        int hasClique = 1;
+
         if((nrNodes + 1)/2 < clique)
         {
-            System.out.println("Error: clique too large.");
-            ok = 0;
+            System.out.println("Error: Clique too large for matrix.");
+            hasClique = 0;
         }
+
         int edges = 0, edgesPerNode;
         int maxDegree = 0, minDegree = nrNodes -1;
         int sumOfDegrees = 0;
@@ -32,7 +37,7 @@ public class homework {
             edgesPerNode = 0;
             for(int j = i+1; j < nrNodes; j++) {
                 aux = (int) (Math.random() * 10) % 2;
-                if(ok == 1) {
+                if(hasClique == 1) {
                     if (i < clique * 2 - 1 && j < clique * 2 - 1) {
                         if (j < clique && i < clique)
                             adjMatrix[i][j] = 1;
@@ -55,7 +60,9 @@ public class homework {
             edges += edgesPerNode;
             sumOfDegrees += 2*edgesPerNode;
         }
+
         printMatrix(adjMatrix);
+
         System.out.println("Edges: " + edges);
         System.out.println("Δ(G): " + maxDegree);
         System.out.println("δ(G): " + minDegree);
