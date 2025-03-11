@@ -1,3 +1,5 @@
+package Compulsory;
+
 public class Project {
     String name;
 

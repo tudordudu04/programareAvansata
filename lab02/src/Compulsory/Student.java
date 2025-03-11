@@ -1,3 +1,5 @@
+package Compulsory;
+
 import java.util.ArrayList;
 
 public class Student {
