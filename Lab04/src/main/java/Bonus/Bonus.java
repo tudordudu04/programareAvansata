@@ -72,18 +72,18 @@ public class Bonus {
                 .filter(loc -> loc.getType() == Type.NEUTRAL)
                 .collect(Collectors.toCollection(PriorityQueue::new));
 //        System.out.println("Neutral locations: " + neutralLocations);
-        Map<Location, Map<Location, Map<Type, Integer>>> pairOfLocations = new HashMap<>();
+        Map<Location, Map<Location, Map<Type, Double>>> pairOfLocations = new HashMap<>();
         for(int i = 0; i< locations.size(); i++) {
             var startLocation = new DijkstraShortestPathDefault(graph, i);
             Location start = locations.get(i);
-            Map<Location, Map<Type, Integer>> safestPath = locations.stream()
+            Map<Location, Map<Type, Double>> safestPath = locations.stream()
                     .filter(loc -> !loc.equals(start))
                     .collect(Collectors.toMap(loc -> loc, loc -> {
-                        Map<Type, Integer> map = new HashMap<>();
+                        Map<Type, Double> map = new HashMap<>();
                         var path = startLocation.computePath(locations.indexOf(loc));
                         for (var vertex : path) {
                             Location location = locations.get(vertex);
-                            map.put(location.getType(), map.getOrDefault(location.getType(), 0) + 1);
+                            map.put(location.getType(), map.getOrDefault(location.getType(), 0.0) + 1);
                         }
                         return map;
                     }));
@@ -96,12 +96,23 @@ public class Bonus {
             for(Location aux : pairOfLocations.get(location).keySet())
             {
                 System.out.println("Node: " + locations.indexOf(aux) + " " + aux);
-                pairOfLocations.get(location).get(aux).forEach((type, integer) -> System.out.println("Type: " + type + " and count: " + integer));
+                pairOfLocations.get(location).get(aux).forEach((type, Double) -> System.out.println("Type: " + type + " and count: " + Double));
                 System.out.println();
             }
             System.out.println("\n");
         }
 
+        Statistics.nrLocations = pairOfLocations.size();
+        Statistics.maxNrNeighbours = pairOfLocations.values().stream()
+                .mapToInt(Map::size)
+                .max()
+                .getAsInt();
+        Statistics.safestPath = pairOfLocations.values().stream()
+                .flatMap(in -> in.values().stream())
+                .flatMap(in -> in.values().stream())
+                .mapToDouble(Double::doubleValue)
+                .min()
+                .getAsDouble();
     }
 
 }
