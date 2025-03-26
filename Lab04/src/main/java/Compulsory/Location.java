@@ -23,7 +23,7 @@ public class Location implements Comparable<Location> {
 
     @Override
     public String toString() {
-        return ("Nume: " + name + ", Tip: " + type);
+        return ("Nume: " + name + ", Tip: " + type + " ");
     }
 
 

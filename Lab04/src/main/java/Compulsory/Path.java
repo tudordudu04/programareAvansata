@@ -1,29 +1,27 @@
 package Compulsory;
 
-public class Path {
-    Location from;
-    Location to;
-    int time;
-    int safetyProbability;
+public class Path{
+    double time;
+    double safetyProbability;
 
-    public Path(Location from, Location to, int time, int safetyProbability) {
-        this.from = from;
-        this.to = to;
+    public Path(double time, double safetyProbability) {
         this.time = time;
         this.safetyProbability = safetyProbability;
     }
 
-    public Location getFrom() {
-        return from;
-    }
-    public Location getTo() {
-        return to;
-    }
     public double getTime() {
         return time;
     }
     public double getSafetyProbability() {
         return safetyProbability;
+    }
+    public Path getPath(){
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return ("Time: " + time + ", Safety Prob: " + safetyProbability + " ");
     }
 
 }
