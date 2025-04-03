@@ -35,13 +35,13 @@ public class Report extends Command {
         VelocityContext context = new VelocityContext();
         context.put("images", images);
 
-        try (FileWriter writer = new FileWriter("report.html")) {
+        try (FileWriter writer = new FileWriter(this.path + "/report.html")) {
             template.merge(context, writer);
         } catch (IOException e) {
             e.printStackTrace();
         }
         try {
-            Path reportPath = Paths.get("report.html");
+            Path reportPath = Paths.get(this.path + "/report.html");
             if (Files.exists(reportPath)) {
                 Desktop.getDesktop().browse(reportPath.toUri());
             }
