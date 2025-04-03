@@ -12,7 +12,7 @@ public class Repository implements Serializable {
     public Repository(String name) {
         this.name = name;
     }
-    List<Image> getImages() {
+    public List<Image> getImages() {
         return this.images;
     }
     public void addImage(Image image) {

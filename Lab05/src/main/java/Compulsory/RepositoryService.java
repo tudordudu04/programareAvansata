@@ -26,21 +26,4 @@ public class RepositoryService implements Serializable {
             }
         }
     }
-
-    public void printImage(String name) throws IOException {
-        for(Image image : this.repository.getImages()) {
-            if (image.name().equals(name)) {
-                File imageFile = new File(image.location());
-                if (imageFile.exists() && Desktop.isDesktopSupported()) {
-                    Desktop.getDesktop().open(imageFile);
-                } else {
-                    System.out.println("Image file not found or cannot be opened.");
-                }
-
-                return;
-            }
-        }
-
-        System.out.println("Image not found in the repository.");
-    }
 }

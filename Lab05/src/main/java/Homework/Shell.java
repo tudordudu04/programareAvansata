@@ -25,8 +25,8 @@ public class Shell {
         System.out.println("[dudu repoShell]: Enter commands for working with repos. Do help for list of commands.");
         System.out.print("[dudu repoShell]: ");
         Scanner scan = new Scanner(System.in);
-        String inputBuffer = "";
-        while(inputBuffer.length() < 100 && scan.hasNextLine()) {
+        String inputBuffer;
+        while(scan.hasNextLine()) {
             inputBuffer = scan.nextLine();
             if (inputBuffer.length() >= 100) {
                 System.out.println("[dudu repoShell]: Too many characters in repoShell.");
@@ -35,7 +35,9 @@ public class Shell {
 
             try {
                 Type test = Type.valueOf(splitInput(inputBuffer).getFirst().toUpperCase());
-                if(service.getRepository() == null && test != Type.CREATE && test != Type.LOAD) throw new RepositoryNotInitialized();
+                if(splitInput(inputBuffer).getFirst().equalsIgnoreCase("exit"))
+                    System.exit(0);
+                else if(service.getRepository() == null && test != Type.CREATE && test != Type.LOAD) throw new RepositoryNotInitialized();
                 else {
                     Command cmd = this.parseInput(splitInput(inputBuffer));
                     cmd.execute(service);
@@ -55,7 +57,6 @@ public class Shell {
         Command cmd = null;
         Type ceva = Type.valueOf(input.getFirst().toUpperCase());
             switch (ceva) {
-                case EXIT -> System.exit(0);
                 case HELP -> {
                     if(input.size() != 1)
                         break;
@@ -92,9 +93,10 @@ public class Shell {
                     return new Save(path);
                 }
                 case REPORT -> {
-                    if(input.size() != 1)
+                    if(input.size() != 2)
                         break;
-                    return new Report();
+                    String path = input.get(1).replace("\"", "");
+                    return new Report(path);
                 }
                 case UPDATE -> {
                     if(input.size() != 5)

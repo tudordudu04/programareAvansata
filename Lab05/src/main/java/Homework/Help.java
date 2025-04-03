@@ -18,6 +18,6 @@ public class Help extends Command {
         System.out.println("[dudu repoShell]: update  \"Name\" \"NewName\" \"Date\" \"List<String> Tags\" \"Path\". Updates the attributes of an image from the current repo.");
         System.out.println("[dudu repoShell]: load \"Path\" Loads a repo from path.");
         System.out.println("[dudu repoShell]: save \"Path\" Saves a repo to path.");
-        System.out.println("[dudu repoShell]: report Create and open an HTML report representing the content of the repository.");
+        System.out.println("[dudu repoShell]: report \"Path\" Create and open an HTML report representing the content of the repository.");
     }
 }
