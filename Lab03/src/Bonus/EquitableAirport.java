@@ -1,12 +1,15 @@
-package Homework;
+package Bonus;
+
 import Compulsory.*;
+import Homework.*;
+
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
-public class Airport {
+public class EquitableAirport {
     ArrayList<Runway> runwaysList = new ArrayList<>();
     HashSet<Flight> flightList = new HashSet<>();
     Map<Runway, HashSet<Flight>> flightAssignments = new HashMap<>();
@@ -25,7 +28,8 @@ public class Airport {
 
     boolean assignFlight(Flight flight) {
         int ok = 0;
-        for (Runway runwayAux : runwaysList) {
+        for (int i = 0; i < runwaysList.size(); i++) {
+            Runway runwayAux = runwaysList.get(i);
             if (!flightAssignments.containsKey(runwayAux)) {
                 HashSet<Flight> flightSet = new HashSet<>();
                 flightSet.add(flight);
@@ -33,10 +37,10 @@ public class Airport {
                 flight.setAssignedDestination(runwayAux);
                 ok = 1;
                 break;
-            } else {
+            } else if(flightAssignments.get(runwayAux).size() < flightList.size() / runwaysList.size()+1){
                 int ok1 = 1;
                 for (Flight aux : flightAssignments.get(runwayAux)) {
-                    if (aux.interval.overlaps(flight.interval)) {
+                    if (aux.getInterval().overlaps(flight.getInterval())) {
                         ok1 = 0;
                         break;
                     }
@@ -46,6 +50,10 @@ public class Airport {
                     flight.setAssignedDestination(runwayAux);
                     ok = 1;
                     break;
+                }
+                else{
+                    flight.getInterval().reschedule(flight.getInterval().getStartTime(), flight.getInterval().getEndTime().plusHours(2));
+                    i--;
                 }
             }
         }
@@ -57,5 +65,4 @@ public class Airport {
             flight.printFlight();
         }
     }
-
 }

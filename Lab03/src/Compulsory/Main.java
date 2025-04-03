@@ -1,4 +1,5 @@
 package Compulsory;
+import Bonus.EquitableAirport;
 import Homework.*;
 import java.time.LocalTime;
 
@@ -16,17 +17,16 @@ public class Main {
         Drone drone3 = new Drone("Autel", "Max", 3, 20, 15);
 
         Aircraft[] airplanes  = new Aircraft[6];
-        {
             airplanes[0] = cargoShip1;
             airplanes[1] = cargoShip2;
             airplanes[2] = drone1;
             airplanes[3] = drone2;
             airplanes[4] = airplane1;
             airplanes[5] = airplane2;
-        }
+
         //Prints the cargo capable objects
         for(int i = 0; i < airplanes.length; i++) {
-//            if(airplanes[i] instanceof Drone) {}
+        //if(airplanes[i] instanceof Drone) {}
             if(airplanes[i].getClass().equals(Freighter.class)) {
                     Freighter freighter = (Freighter) airplanes[i];
                     System.out.println(freighter.getName() + " " + freighter.getModel() + " " + freighter.getTailNumber() + freighter.getMaximumPayload() + " " + freighter.getWingSpan());
@@ -37,7 +37,9 @@ public class Main {
             }
         }
 
-        Airport hCoanda = new Airport();
+        //Homework
+
+        EquitableAirport hCoanda = new EquitableAirport();
         //Runways
             hCoanda.addRunway(new Runway("West Wing"));
             hCoanda.addRunway(new Runway("East Wing"));
@@ -65,7 +67,7 @@ public class Main {
                 System.out.println("Flight: " + cargoShip3.name + " couldn't be added because of scheduling issues.");
             if(!hCoanda.addFlight(new Flight (firstInterval, drone1, "07")))
                 System.out.println("Flight: " + drone1.name + " couldn't be added because of scheduling issues.");
-            if(!hCoanda.addFlight(new Flight (fourthInterval, drone2, "08")))
+            if(!hCoanda.addFlight(new Flight (firstInterval, drone2, "08")))
                 System.out.println("Flight: " + drone2.name + " couldn't be added because of scheduling issues.");
             if(!hCoanda.addFlight(new Flight (fourthInterval, drone3, "09")))
                 System.out.println("Flight: " + drone3.name + " couldn't be added because of scheduling issues.");

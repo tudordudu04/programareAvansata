@@ -13,8 +13,18 @@ public class Interval {
     public Interval getInterval() {
         return this;
     }
+
+    //Mai bine dau override aici
     public String intervalToString(){
         return ("(" + startTime.toString() + " - " + endTime.toString() + ")");
+    }
+
+    public LocalTime getStartTime() {
+        return startTime;
+    }
+
+    public LocalTime getEndTime() {
+        return endTime;
     }
 
     public void reschedule(LocalTime startTime, LocalTime endTime) {
@@ -23,8 +33,7 @@ public class Interval {
         //We are very sorry for the inconvenience! lol
     }
     public boolean overlaps(Interval interval) {
-        return ((this.startTime.isAfter(interval.startTime) || this.startTime.equals(interval.startTime))  && (this.startTime.isBefore(interval.endTime) || this.startTime.equals(interval.endTime))
-                || (this.endTime.isAfter(interval.startTime) || this.endTime.equals(interval.startTime))  && (this.endTime.isBefore(interval.endTime) || this.endTime.equals(interval.endTime)));
+        return ((this.endTime.isAfter(interval.startTime) || this.endTime.equals(interval.startTime))  && (this.endTime.isBefore(interval.endTime) || this.endTime.equals(interval.endTime)));
     }
 
 }
