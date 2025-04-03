@@ -8,5 +8,6 @@ public enum Type {
     LOAD,
     REPORT,
     UPDATE,
-    SAVE
+    SAVE,
+    PRINT;
 }

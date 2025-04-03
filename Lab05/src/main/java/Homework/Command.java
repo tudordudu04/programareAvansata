@@ -1,8 +1,20 @@
 package Homework;
 
-import java.util.List;
+import Compulsory.RepositoryService;
 
-public class Command {
+public abstract class Command {
     Type type;
-    List<String> arguments;
+
+    public Command() {
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public Type getType() {
+        return this.type;
+    }
+
+    public abstract void execute(RepositoryService var1);
 }

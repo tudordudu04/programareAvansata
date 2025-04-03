@@ -1,38 +1,49 @@
 package Compulsory;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Repository{
+public class Repository implements Serializable {
+    private static final long serialVersionUID = 1L;
     String name;
-    private List<Image> images = new ArrayList<>();
-    //may have other properties such as a name
+    List<Image> images = new ArrayList();
 
     public Repository(String name) {
         this.name = name;
     }
-    // getImages
 
-    List<Image> getImages(){
-        return images;
+    List<Image> getImages() {
+        return this.images;
     }
 
-    void addImage(Image image) {
-        images.add(image);
+    public void addImage(Image image) {
+        this.images.add(image);
     }
 
-    void removeImage(Image image) {
-        images.remove(image);
+    public void updateImage(String imageName, Image newImage) {
+        for(Image image : this.images) {
+            if (image.name().equals(imageName)) {
+                this.images.remove(image);
+                this.images.add(newImage);
+            }
+        }
+
     }
 
-    // bonus problem ...
+    public void removeImage(String imageName) {
+        for(Image image : this.images) {
+            if (image.name().equals(imageName)) {
+                this.images.remove(image);
+            }
+        }
+
+    }
+
     public void addAll(String folder) {
-// add all images in the folder
     }
 
-    @Override
-    public String toString(){
-        return name;
+    public String toString() {
+        return this.name;
     }
-
 }
