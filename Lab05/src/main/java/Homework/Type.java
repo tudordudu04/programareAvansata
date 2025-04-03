@@ -9,5 +9,6 @@ public enum Type {
     REPORT,
     UPDATE,
     SAVE,
-    PRINT;
+    PRINT,
+    CREATE;
 }

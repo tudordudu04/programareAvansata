@@ -12,15 +12,12 @@ public class Repository implements Serializable {
     public Repository(String name) {
         this.name = name;
     }
-
     List<Image> getImages() {
         return this.images;
     }
-
     public void addImage(Image image) {
         this.images.add(image);
     }
-
     public void updateImage(String imageName, Image newImage) {
         for(Image image : this.images) {
             if (image.name().equals(imageName)) {

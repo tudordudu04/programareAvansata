@@ -6,11 +6,7 @@ import java.io.IOException;
 import java.io.Serializable;
 
 public class RepositoryService implements Serializable {
-    Repository repository;
-
-    public RepositoryService(Repository repo) {
-        this.repository = repo;
-    }
+    Repository repository = null;
 
     public Repository getRepository() {
         return this.repository;
@@ -29,7 +25,6 @@ public class RepositoryService implements Serializable {
                 System.out.println("Image file not found or cannot be opened: " + image.location());
             }
         }
-
     }
 
     public void printImage(String name) throws IOException {

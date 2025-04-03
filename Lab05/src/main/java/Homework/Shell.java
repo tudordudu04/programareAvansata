@@ -1,7 +1,6 @@
 package Homework;
 
 import Compulsory.Image;
-import Compulsory.Repository;
 import Compulsory.RepositoryService;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -18,17 +17,16 @@ import javax.imageio.ImageIO;
 
 public class Shell {
     public Shell() {
-        Repository repo = new Repository("Color Photos");
-        RepositoryService service = new RepositoryService(repo);
+        RepositoryService service = new RepositoryService();
         this.startShell(service);
     }
 
     private void startShell(RepositoryService service) {
-        System.out.println("Enter commands for working with repos. Do help for list of commands.");
+        System.out.println("[dudu repoShell]: Enter commands for working with repos. Do help for list of commands.");
         System.out.print("[dudu repoShell]: ");
         Scanner scan = new Scanner(System.in);
-
-        for(String inputBuffer = ""; inputBuffer.length() < 100 && scan.hasNextLine(); System.out.print("[dudu repoShell]: ")) {
+        String inputBuffer = "";
+        while(inputBuffer.length() < 100 && scan.hasNextLine()) {
             inputBuffer = scan.nextLine();
             if (inputBuffer.length() >= 100) {
                 System.out.println("[dudu repoShell]: Too many characters in repoShell.");
@@ -36,12 +34,18 @@ public class Shell {
             }
 
             try {
-                Type test = Type.valueOf(((String)splitInput(inputBuffer).getFirst()).toUpperCase());
-                Command cmd = this.parseInput(splitInput(inputBuffer));
-                cmd.execute(service);
-            } catch (Exception var) {
+                Type test = Type.valueOf(splitInput(inputBuffer).getFirst().toUpperCase());
+                if(service.getRepository() == null && test != Type.CREATE && test != Type.LOAD) throw new RepositoryNotInitialized();
+                else {
+                    Command cmd = this.parseInput(splitInput(inputBuffer));
+                    cmd.execute(service);
+                }
+            }catch (RepositoryNotInitialized e) {
+                System.out.println(e.getMessage());
+            }catch (Exception var) {
                 System.out.println("[dudu repoShell]: Invalid command.");
             }
+            System.out.print("[dudu repoShell]: ");
         }
 
         scan.close();
@@ -49,93 +53,86 @@ public class Shell {
 
     private Command parseInput(List<String> input) {
         Command cmd = null;
-        Type ceva = Type.valueOf(((String) input.getFirst()).toUpperCase());
-        try {
+        Type ceva = Type.valueOf(input.getFirst().toUpperCase());
             switch (ceva) {
-                case EXIT -> {
-                    System.exit(0);
-                }
+                case EXIT -> System.exit(0);
                 case HELP -> {
-                    if (input.size() != 1) {
-                        throw new Exception();
-                    }
+                    if(input.size() != 1)
+                        break;
                     return new Help();
                 }
                 case ADD -> {
-                    if (input.size() != 5) {
-                        throw new Exception();
-                    }
-                    String name = (String) input.get(1);
-                    Date data = null;
+                    if(input.size() != 5)
+                        break;
+                    String name = input.get(1).replace("\"", "");
+                    Date data;
                     try {
-                        data = (new SimpleDateFormat("dd-MM-yyyy")).parse(((String) input.get(2)).replace("\"", ""));
+                        data = (new SimpleDateFormat("dd-MM-yyyy")).parse(input.get(2).replace("\"", ""));
                     } catch (Exception var) {
                         System.out.println("[dudu repoShell]: Not a valid date.");
                         break;
                     }
-                    List<String> tags = Arrays.stream(((String) input.get(3)).split(" ")).toList();
-                    if (!this.isImage(((String) input.get(4)).replace("\"", ""))) {
-                        throw new Exception();
+                    List<String> tags = Arrays.stream(input.get(3).split(" ")).toList();
+                    if (!this.isImage(input.get(4).replace("\"", ""))) {
+                        break;
                     }
-                    String path = ((String) input.get(4)).replace("\"", "");
+                    String path = input.get(4).replace("\"", "");
                     return new Add(name, data, tags, path);
                 }
                 case REMOVE -> {
-                    if (input.size() != 2) {
-                        throw new Exception();
-                    }
-                    String name = (String) input.get(1);
+                    if(input.size() != 2)
+                        break;
+                    String name = input.get(1).replace("\"", "");
                     return new Remove(name);
                 }
                 case SAVE -> {
-                    if (input.size() != 2) {
-                        throw new Exception();
-                    }
-                    String path = ((String) input.get(1)).replace("\"", "");
+                    if(input.size() != 2)
+                        break;
+                    String path = input.get(1).replace("\"", "");
                     return new Save(path);
                 }
                 case REPORT -> {
-                    if (input.size() != 1) {
-                        throw new Exception();
-                    }
+                    if(input.size() != 1)
+                        break;
                     return new Report();
                 }
                 case UPDATE -> {
-                    String oldName = (String) input.get(1);
-                    String newName = (String) input.get(2);
-                    Date date = null;
+                    if(input.size() != 5)
+                        break;
+                    String oldName = input.get(1).replace("\"", "");
+                    String newName = input.get(2).replace("\"", "");
+                    Date date;
                     try {
-                        date = (new SimpleDateFormat("dd-MM-yyyy")).parse(((String) input.get(3)).replace("\"", ""));
-                    } catch (Exception var9) {
+                        date = (new SimpleDateFormat("dd-MM-yyyy")).parse(input.get(3).replace("\"", ""));
+                    } catch (Exception var) {
                         System.out.println("[dudu repoShell]: Not a valid date.");
                         break;
                     }
-                    List<String> tags = Arrays.stream(((String) input.get(4)).split(" ")).toList();
-                    if (!this.isImage(((String) input.get(5)).replace("\"", ""))) {
-                        throw new Exception();
+                    List<String> tags = Arrays.stream(input.get(4).split(" ")).toList();
+                    if (!this.isImage(input.get(5).replace("\"", ""))) {
+                        break;
                     }
-                    String path = ((String) input.get(5)).replace("\"", "");
+                    String path = input.get(5).replace("\"", "");
                     return new Update(oldName, new Image(newName, date, tags, path));
                 }
                 case LOAD -> {
-                    if (input.size() != 2) {
-                        throw new Exception();
-                    }
-                    String path = ((String) input.get(1)).replace("\"", "");
+                    if(input.size() != 2)
+                        break;
+                    String path = input.get(1).replace("\"", "");
                     return new Load(path);
                 }
                 case PRINT -> {
-                    if (input.size() != 1) {
-                        throw new Exception();
-                    }
-
+                    if(input.size() != 1)
+                        break;
                     return new Print();
                 }
+                case CREATE -> {
+                    if(input.size() != 2)
+                        break;
+                    String name = input.get(1).replace("\"", "");
+                    return new Create(name);
+                }
             }
-            } catch(Exception var){
-                System.out.println("ERROR");
-
-        }
         return cmd;
     }
     private boolean isImage(String path) {
@@ -153,7 +150,7 @@ public class Shell {
     }
 
     private static List<String> splitInput(String input) {
-        List<String> result = new ArrayList();
+        List<String> result = new ArrayList<>();
         Pattern pattern = Pattern.compile("\"([^\"]*)\"|(\\S+)");
         Matcher matcher = pattern.matcher(input);
 
