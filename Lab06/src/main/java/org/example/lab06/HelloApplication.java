@@ -131,12 +131,19 @@ public class HelloApplication extends Application {
             if (dot.isClicked(event.getX(), event.getY())) {
                 if (previousDot == null) {
                     // First dot is clicked
-                    if (isPlayerBlueTurn && !redConnections.containsKey(dot))
-                        previousDot = dot;
-                    else if (!isPlayerBlueTurn && !blueConnections.containsKey(dot))
-                        previousDot = dot;
-                    else
-                        showAlert("Invalid Move", "You can only start from your own paths or unconnected dots!");
+                    if (isPlayerBlueTurn) {
+                        if (blueConnections.containsKey(dot) || !redConnections.containsKey(dot)) {
+                            previousDot = dot;
+                        } else {
+                            showAlert("Invalid Move", "You can only start from your own paths or unconnected dots!");
+                        }
+                    } else {
+                        if (redConnections.containsKey(dot) || !blueConnections.containsKey(dot)) {
+                            previousDot = dot;
+                        } else {
+                            showAlert("Invalid Move", "You can only start from your own paths or unconnected dots!");
+                        }
+                    }
                 } else {
                     // Second dot is clicked
                     if (isPlayerBlueTurn) {
@@ -181,16 +188,16 @@ public class HelloApplication extends Application {
         redScoreLabel.setText(String.format("Red Score: %.1f", redScore));
     }
 
-    private double calculateLineLength(Dot start, Dot end) {
-        return Math.sqrt(Math.pow(end.getX() - start.getX(), 2) + Math.pow(end.getY() - start.getY(), 2));
-    }
-
     private boolean isValidMove(Map<Dot, List<Dot>> playerConnections, Map<Dot, List<Dot>> opponentConnections, Dot start, Dot end) {
         if(!playerConnections.isEmpty())
             if(!playerConnections.containsKey(start) && !playerConnections.containsKey(end)) {
                 return false;
             }
         return !opponentConnections.containsKey(start) && !opponentConnections.containsKey(end);
+    }
+
+    private double calculateLineLength(Dot start, Dot end) {
+        return Math.sqrt(Math.pow(end.getX() - start.getX(), 2) + Math.pow(end.getY() - start.getY(), 2));
     }
 
     private void addConnection(Map<Dot, List<Dot>> connections, Dot start, Dot end) {
