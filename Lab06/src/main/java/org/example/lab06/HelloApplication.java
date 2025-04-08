@@ -10,7 +10,6 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
@@ -26,6 +25,14 @@ public class HelloApplication extends Application {
     private Map<Dot, Dot> redParent = new HashMap<>();
     private int numberOfDots = 10;
     private boolean isPlayerBlueTurn = true;
+
+    // New: Scores for players
+    private double blueScore = 0.0;
+    private double redScore = 0.0;
+
+    // New: Labels to display scores
+    private Label blueScoreLabel = new Label("Blue Score: 0.0");
+    private Label redScoreLabel = new Label("Red Score: 0.0");
 
     public static void main(String[] args) {
         launch(args);
@@ -69,16 +76,24 @@ public class HelloApplication extends Application {
         newGameButton.setOnAction(e -> {
             try {
                 numberOfDots = Integer.parseInt(textField.getText());
-                if(numberOfDots < 4) throw new NumberFormatException();
+                if (numberOfDots < 4) throw new NumberFormatException();
                 dots.clear();
                 lines.clear();
+                blueConnections.clear();
+                redConnections.clear();
+                blueParent.clear();
+                redParent.clear();
+                blueScore = 0.0;
+                redScore = 0.0;
+                updateScores();
                 generateDots(((BorderPane) stage.getScene().getRoot()).getCenter());
             } catch (NumberFormatException ex) {
                 showAlert("Invalid Input", "Please enter a valid number.");
             }
         });
 
-        HBox configPanel = new HBox(10, label, textField, newGameButton);
+        // New: Add score labels to the configuration panel
+        HBox configPanel = new HBox(10, blueScoreLabel, label, textField, newGameButton, redScoreLabel);
         configPanel.setPadding(new Insets(10));
         configPanel.setAlignment(Pos.CENTER);
         return configPanel;
@@ -116,55 +131,37 @@ public class HelloApplication extends Application {
             if (dot.isClicked(event.getX(), event.getY())) {
                 if (previousDot == null) {
                     // First dot is clicked
-                    if (isPlayerBlueTurn) {
-                        // Check if the dot belongs to the blue player's existing paths or is unconnected
-                        if (blueConnections.containsKey(dot) || (!redConnections.containsKey(dot) && !dotIsConnected(dot))) {
-                            previousDot = dot;
-                        } else {
-                            showAlert("Invalid Move", "You can only connect from your own paths or unconnected dots!");
-                        }
-                    } else {
-                        // Check if the dot belongs to the red player's existing paths or is unconnected
-                        if (redConnections.containsKey(dot) || (!blueConnections.containsKey(dot) && !dotIsConnected(dot))) {
-                            previousDot = dot;
-                        } else {
-                            showAlert("Invalid Move", "You can only connect from your own paths or unconnected dots!");
-                        }
-                    }
+                    if (isPlayerBlueTurn && !redConnections.containsKey(dot))
+                        previousDot = dot;
+                    else if (!isPlayerBlueTurn && !blueConnections.containsKey(dot))
+                        previousDot = dot;
+                    else
+                        showAlert("Invalid Move", "You can only start from your own paths or unconnected dots!");
                 } else {
                     // Second dot is clicked
                     if (isPlayerBlueTurn) {
-                        // Ensure the move is valid for the blue player
-                        if (!isValidMove(blueConnections, redConnections, previousDot, dot) ||
-                                !validPathSelection(blueConnections, previousDot, dot)) {
-                            showAlert("Invalid Move", "You can only continue your own paths!");
-                            previousDot = null;
-                            return;
+                        if (isValidMove(blueConnections, redConnections, previousDot, dot)) {
+                            addConnection(blueConnections, previousDot, dot);
+                            double lineLength = calculateLineLength(previousDot, dot);
+                            blueScore += lineLength; // Update red player's score
+                            lines.add(new Line(previousDot, dot, Color.BLUE));
+                            updateScores();
+                        } else {
+                            showAlert("Invalid Move", "You can only connect to your own paths or start a new path!");
+                            previousDot = null; // Reset previousDot after an invalid move
+                            return; // Exit early to prevent further processing
                         }
-                        addConnection(blueConnections, previousDot, dot);
-                        if (formsCycle(blueParent, previousDot, dot)) {
-                            showAlert("Invalid Move", "You cannot form a cycle!");
-                            removeConnection(blueConnections, previousDot, dot);
-                            previousDot = null;
-                            return;
-                        }
-                        lines.add(new Line(previousDot, dot, Color.BLUE));
                     } else {
-                        // Ensure the move is valid for the red player
-                        if (!isValidMove(redConnections, blueConnections, previousDot, dot) ||
-                                !validPathSelection(redConnections, previousDot, dot)) {
-                            showAlert("Invalid Move", "You can only continue your own paths!");
-                            previousDot = null;
-                            return;
+                        if (isValidMove(redConnections, blueConnections, previousDot, dot)) {
+                            double lineLength = calculateLineLength(previousDot, dot);
+                            redScore += lineLength; // Update red player's score
+                            lines.add(new Line(previousDot, dot, Color.RED));
+                            updateScores();
+                        } else {
+                            showAlert("Invalid Move", "You can only connect to your own paths or start a new path!");
+                            previousDot = null; // Reset previousDot after an invalid move
+                            return; // Exit early to prevent further processing
                         }
-                        addConnection(redConnections, previousDot, dot);
-                        if (formsCycle(redParent, previousDot, dot)) {
-                            showAlert("Invalid Move", "You cannot form a cycle!");
-                            removeConnection(redConnections, previousDot, dot);
-                            previousDot = null;
-                            return;
-                        }
-                        lines.add(new Line(previousDot, dot, Color.RED));
                     }
 
                     // Switch player turn and reset previousDot
@@ -179,16 +176,20 @@ public class HelloApplication extends Application {
         }
     }
 
-    private boolean dotIsConnected(Dot dot) {
-        return blueConnections.containsKey(dot) || redConnections.containsKey(dot);
+    private void updateScores() {
+        blueScoreLabel.setText(String.format("Blue Score: %.1f", blueScore));
+        redScoreLabel.setText(String.format("Red Score: %.1f", redScore));
     }
 
-    private boolean validPathSelection(Map<Dot, List<Dot>> playerConnections, Dot start, Dot end) {
-        return playerConnections.containsKey(start) || playerConnections.containsKey(end) || !dotIsConnected(start) || !dotIsConnected(end);
+    private double calculateLineLength(Dot start, Dot end) {
+        return Math.sqrt(Math.pow(end.getX() - start.getX(), 2) + Math.pow(end.getY() - start.getY(), 2));
     }
 
     private boolean isValidMove(Map<Dot, List<Dot>> playerConnections, Map<Dot, List<Dot>> opponentConnections, Dot start, Dot end) {
-        // Ensure dots are not connected by the opponent's path
+        if(!playerConnections.isEmpty())
+            if(!playerConnections.containsKey(start) && !playerConnections.containsKey(end)) {
+                return false;
+            }
         return !opponentConnections.containsKey(start) && !opponentConnections.containsKey(end);
     }
 
@@ -197,32 +198,6 @@ public class HelloApplication extends Application {
         connections.putIfAbsent(end, new ArrayList<>());
         connections.get(start).add(end);
         connections.get(end).add(start);
-    }
-
-    private void removeConnection(Map<Dot, List<Dot>> connections, Dot start, Dot end) {
-        connections.get(start).remove(end);
-        connections.get(end).remove(start);
-    }
-
-    private boolean formsCycle(Map<Dot, Dot> parent, Dot start, Dot end) {
-        Dot root1 = findParent(parent, start);
-        Dot root2 = findParent(parent, end);
-
-        if (root1 == root2) {
-            return true; // Cycle detected
-        }
-
-        // Union the sets
-        parent.put(root1, root2);
-        return false;
-    }
-
-    private Dot findParent(Map<Dot, Dot> parent, Dot dot) {
-        parent.putIfAbsent(dot, dot);
-        if (parent.get(dot) != dot) {
-            parent.put(dot, findParent(parent, parent.get(dot))); // Path compression
-        }
-        return parent.get(dot);
     }
 
     private void drawCanvas(Canvas canvas) {
