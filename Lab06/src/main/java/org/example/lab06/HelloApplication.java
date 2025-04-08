@@ -13,9 +13,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class HelloApplication extends Application {
+public class HelloApplication extends Application implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final List<Dot> dots = new ArrayList<>();
     private final List<Line> lines = new ArrayList<>();
     private Dot previousDot = null;
@@ -103,10 +105,11 @@ public class HelloApplication extends Application {
         Button loadButton = new Button("Load");
         Button saveButton = new Button("Save");
         Button exitButton = new Button("Exit");
+        Button exportButton = new Button("Export");
 
         exitButton.setOnAction(e -> stage.close());
 
-        HBox controlPanel = new HBox(10, loadButton, saveButton, exitButton);
+        HBox controlPanel = new HBox(10, loadButton, saveButton, exitButton, exportButton);
         controlPanel.setPadding(new Insets(10));
         controlPanel.setAlignment(Pos.CENTER);
         return controlPanel;
@@ -160,6 +163,7 @@ public class HelloApplication extends Application {
                         }
                     } else {
                         if (isValidMove(redConnections, blueConnections, previousDot, dot)) {
+                            addConnection(redConnections, previousDot, dot);
                             double lineLength = calculateLineLength(previousDot, dot);
                             redScore += lineLength; // Update red player's score
                             lines.add(new Line(previousDot, dot, Color.RED));
@@ -175,8 +179,16 @@ public class HelloApplication extends Application {
                     isPlayerBlueTurn = !isPlayerBlueTurn;
                     previousDot = null;
 
-                    // Redraw the canvas
                     drawCanvas(canvas);
+                    if(blueConnections.size() + redConnections.size() == numberOfDots) {
+                        if(blueScore < redScore)
+                            showAlert("Game Over", "Blue wins!");
+                        else if(redScore < blueScore)
+                            showAlert("Game Over", "Red wins!");
+                        else showAlert("Game Over", "Draw!");
+                        return;
+                    }
+                    // Redraw the canvas
                     return;
                 }
             }
