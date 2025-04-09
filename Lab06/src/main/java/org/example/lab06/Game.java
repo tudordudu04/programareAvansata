@@ -19,7 +19,7 @@ import javax.imageio.ImageIO;
 import java.io.*;
 import java.util.*;
 
-public class HelloApplication extends Application implements Serializable {
+public class Game extends Application implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final List<Circle> dots = new ArrayList<>();
@@ -127,7 +127,7 @@ public class HelloApplication extends Application implements Serializable {
     private void loadGameState(Stage stage) {
         try (FileInputStream fileIn = new FileInputStream("game_state.ser");
              ObjectInputStream objectIn = new ObjectInputStream(fileIn)) {
-            HelloApplication loadedApp = (HelloApplication) objectIn.readObject();
+            Game loadedApp = (Game) objectIn.readObject();
 
             this.dots.clear();
             this.dots.addAll(loadedApp.dots);
