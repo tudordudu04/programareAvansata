@@ -87,10 +87,11 @@ public class Shell {
                     return new Remove(name);
                 }
                 case SAVE -> {
-                    if(input.size() != 2)
+                    if(input.size() != 3)
                         break;
-                    String path = input.get(1).replace("\"", "");
-                    return new Save(path);
+                    String path = input.get(2).replace("\"", "");
+                    String arg = input.get(1);
+                    return new Save(path, arg);
                 }
                 case REPORT -> {
                     if(input.size() != 2)
@@ -118,10 +119,11 @@ public class Shell {
                     return new Update(oldName, new Image(newName, date, tags, path));
                 }
                 case LOAD -> {
-                    if(input.size() != 2)
+                    if(input.size() != 3)
                         break;
-                    String path = input.get(1).replace("\"", "");
-                    return new Load(path);
+                    String path = input.get(2).replace("\"", "");
+                    String arg = input.get(1);
+                    return new Load(path, arg);
                 }
                 case PRINT -> {
                     if(input.size() != 1)
