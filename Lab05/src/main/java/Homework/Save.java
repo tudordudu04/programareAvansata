@@ -20,7 +20,6 @@ public class Save extends Command implements Serializable {
             oos.writeObject(service.getRepository());
             System.out.println("Repository saved successfully.");
         } catch (IOException e) {
-            e.printStackTrace();
             System.out.println("Failed to save repository.");
         }
 

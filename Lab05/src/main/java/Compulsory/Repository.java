@@ -25,19 +25,13 @@ public class Repository implements Serializable {
                 this.images.add(newImage);
             }
         }
-
     }
-
     public void removeImage(String imageName) {
         for(Image image : this.images) {
             if (image.name().equals(imageName)) {
                 this.images.remove(image);
             }
         }
-
-    }
-
-    public void addAll(String folder) {
     }
 
     public String toString() {

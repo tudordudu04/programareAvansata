@@ -37,7 +37,7 @@ public class Shell {
                 Type test = Type.valueOf(splitInput(inputBuffer).getFirst().toUpperCase());
                 if(splitInput(inputBuffer).getFirst().equalsIgnoreCase("exit"))
                     System.exit(0);
-                else if(service.getRepository() == null && test != Type.CREATE && test != Type.LOAD) throw new RepositoryNotInitialized();
+                else if(service.getRepository() == null && test != Type.CREATE && test != Type.LOAD && test != Type.HELP) throw new RepositoryNotInitialized();
                 else {
                     Command cmd = this.parseInput(splitInput(inputBuffer));
                     cmd.execute(service);
@@ -133,6 +133,17 @@ public class Shell {
                         break;
                     String name = input.get(1).replace("\"", "");
                     return new Create(name);
+                }
+                case ADDALL -> {
+                    if(input.size() != 2)
+                        break;
+                    String path = input.get(1).replace("\"", "");
+                    return new AddAll(path);
+                }
+                case TAGS -> {
+                    if (input.size() != 1)
+                        break;
+                    return new RandomTags();
                 }
             }
         return cmd;

@@ -38,7 +38,7 @@ public class Report extends Command {
         try (FileWriter writer = new FileWriter(this.path + "/report.html")) {
             template.merge(context, writer);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Couldn't write html file to path");
         }
         try {
             Path reportPath = Paths.get(this.path + "/report.html");
@@ -46,7 +46,7 @@ public class Report extends Command {
                 Desktop.getDesktop().browse(reportPath.toUri());
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Couldn't read html file from path");
         }
     }
 }

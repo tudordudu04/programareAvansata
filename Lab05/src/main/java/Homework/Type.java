@@ -10,5 +10,7 @@ public enum Type {
     UPDATE,
     SAVE,
     PRINT,
-    CREATE;
+    CREATE,
+    ADDALL,
+    TAGS
 }

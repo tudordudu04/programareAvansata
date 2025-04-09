@@ -24,6 +24,7 @@ public class RepositoryService implements Serializable {
             } else {
                 System.out.println("Image file not found or cannot be opened: " + image.location());
             }
+            System.out.println(image.tags());
         }
     }
 }
