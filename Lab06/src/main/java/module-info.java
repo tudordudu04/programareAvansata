@@ -10,6 +10,7 @@ module org.example.lab06 {
     requires org.kordamp.bootstrapfx.core;
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
+    requires javafx.swing;
 
     opens org.example.lab06 to javafx.fxml;
     exports org.example.lab06;

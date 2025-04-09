@@ -1,40 +1,42 @@
 package org.example.lab06;
 
 import javafx.application.Application;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
 import javafx.stage.Stage;
 
-import java.io.Serializable;
+import javax.imageio.ImageIO;
+import java.io.*;
 import java.util.*;
 
 public class HelloApplication extends Application implements Serializable {
     private static final long serialVersionUID = 1L;
-    private final List<Dot> dots = new ArrayList<>();
+
+    private final List<Circle> dots = new ArrayList<>();
     private final List<Line> lines = new ArrayList<>();
-    private Dot previousDot = null;
-    private Map<Dot, List<Dot>> blueConnections = new HashMap<>();
-    private Map<Dot, List<Dot>> redConnections = new HashMap<>();
-    private Map<Dot, Dot> blueParent = new HashMap<>();
-    private Map<Dot, Dot> redParent = new HashMap<>();
+    private Circle previousDot = null;
+    private Map<Circle, List<Circle>> blueConnections = new HashMap<>();
+    private Map<Circle, List<Circle>> redConnections = new HashMap<>();
     private int numberOfDots = 10;
     private boolean isPlayerBlueTurn = true;
 
-    // New: Scores for players
     private double blueScore = 0.0;
     private double redScore = 0.0;
 
-    // New: Labels to display scores
     private Label blueScoreLabel = new Label("Blue Score: 0.0");
     private Label redScoreLabel = new Label("Red Score: 0.0");
+
+    private transient Pane boardPane;
 
     public static void main(String[] args) {
         launch(args);
@@ -46,28 +48,21 @@ public class HelloApplication extends Application implements Serializable {
 
         BorderPane root = new BorderPane();
 
-        // Configuration Panel
         HBox configPanel = createConfigurationPanel(primaryStage);
         root.setTop(configPanel);
 
-        // Canvas
-        Canvas canvas = new Canvas(800, 600);
-        drawCanvas(canvas);
-        root.setCenter(canvas);
+        boardPane = new Pane();
+        boardPane.setPrefSize(800, 600);
+        root.setCenter(boardPane);
 
-        // Control Panel
-        HBox controlPanel = createControlPanel(primaryStage, canvas);
+        HBox controlPanel = createControlPanel(primaryStage);
         root.setBottom(controlPanel);
-
-        canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-            handleCanvasClick(event, canvas);
-        });
 
         Scene scene = new Scene(root, 800, 700);
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        generateDots(canvas);
+        generateDots();
     }
 
     private HBox createConfigurationPanel(Stage stage) {
@@ -83,30 +78,33 @@ public class HelloApplication extends Application implements Serializable {
                 lines.clear();
                 blueConnections.clear();
                 redConnections.clear();
-                blueParent.clear();
-                redParent.clear();
                 blueScore = 0.0;
                 redScore = 0.0;
                 updateScores();
-                generateDots(((BorderPane) stage.getScene().getRoot()).getCenter());
+                previousDot = null;
+                isPlayerBlueTurn = true;
+                boardPane.getChildren().clear(); // Clear the board
+                generateDots();
             } catch (NumberFormatException ex) {
                 showAlert("Invalid Input", "Please enter a valid number.");
             }
         });
 
-        // New: Add score labels to the configuration panel
         HBox configPanel = new HBox(10, blueScoreLabel, label, textField, newGameButton, redScoreLabel);
         configPanel.setPadding(new Insets(10));
         configPanel.setAlignment(Pos.CENTER);
         return configPanel;
     }
 
-    private HBox createControlPanel(Stage stage, Canvas canvas) {
+    private HBox createControlPanel(Stage stage) {
         Button loadButton = new Button("Load");
         Button saveButton = new Button("Save");
         Button exitButton = new Button("Exit");
         Button exportButton = new Button("Export");
 
+        saveButton.setOnAction(e -> saveGameState());
+        loadButton.setOnAction(e -> loadGameState(stage));
+        exportButton.setOnAction(e -> exportGameBoard());
         exitButton.setOnAction(e -> stage.close());
 
         HBox controlPanel = new HBox(10, loadButton, saveButton, exitButton, exportButton);
@@ -115,92 +113,124 @@ public class HelloApplication extends Application implements Serializable {
         return controlPanel;
     }
 
-    private void generateDots(Object canvasObj) {
-        if (canvasObj instanceof Canvas) {
-            Canvas canvas = (Canvas) canvasObj;
-            dots.clear();
-            Random random = new Random();
-            for (int i = 0; i < numberOfDots; i++) {
-                int x = random.nextInt((int) canvas.getWidth() - 40) + 20;
-                int y = random.nextInt((int) canvas.getHeight() - 40) + 20;
-                dots.add(new Dot(x, y));
-            }
-            drawCanvas(canvas);
+    private void saveGameState() {
+        try (FileOutputStream fileOut = new FileOutputStream("game_state.ser");
+             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)) {
+            objectOut.writeObject(this);
+            showAlert("Save Successful", "Game state has been saved to game_state.ser");
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert("Save Failed", "An error occurred while saving the game state.");
+        }
+    }//Nu merge
+
+    private void loadGameState(Stage stage) {
+        try (FileInputStream fileIn = new FileInputStream("game_state.ser");
+             ObjectInputStream objectIn = new ObjectInputStream(fileIn)) {
+            HelloApplication loadedApp = (HelloApplication) objectIn.readObject();
+
+            this.dots.clear();
+            this.dots.addAll(loadedApp.dots);
+            this.lines.clear();
+            this.lines.addAll(loadedApp.lines);
+            this.blueConnections = loadedApp.blueConnections;
+            this.redConnections = loadedApp.redConnections;
+            this.numberOfDots = loadedApp.numberOfDots;
+            this.isPlayerBlueTurn = loadedApp.isPlayerBlueTurn;
+            this.blueScore = loadedApp.blueScore;
+            this.redScore = loadedApp.redScore;
+
+            updateScores();
+            boardPane.getChildren().clear();
+            boardPane.getChildren().addAll(dots);
+            boardPane.getChildren().addAll(lines);
+
+            showAlert("Load Successful", "Game state has been loaded successfully.");
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            showAlert("Load Failed", "An error occurred while loading the game state.");
+        }
+    } //Nu merge
+
+    private void exportGameBoard() {
+        WritableImage image = boardPane.snapshot(null, null);
+        File file = new File("game_snapshot.png");
+        try {
+            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+            showAlert("Export Successful", "Game board has been exported as game_snapshot.png.");
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert("Export Failed", "An error occurred while exporting the game board.");
         }
     }
 
-    private void handleCanvasClick(MouseEvent event, Canvas canvas) {
-        for (Dot dot : dots) {
-            if (dot.isClicked(event.getX(), event.getY())) {
-                if (previousDot == null) {
-                    // First dot is clicked
-                    if (isPlayerBlueTurn) {
-                        if (blueConnections.containsKey(dot) || !redConnections.containsKey(dot)) {
-                            previousDot = dot;
-                        } else {
-                            showAlert("Invalid Move", "You can only start from your own paths or unconnected dots!");
-                        }
-                    } else {
-                        if (redConnections.containsKey(dot) || !blueConnections.containsKey(dot)) {
-                            previousDot = dot;
-                        } else {
-                            showAlert("Invalid Move", "You can only start from your own paths or unconnected dots!");
-                        }
-                    }
+    private void generateDots() {
+        Random random = new Random();
+        for (int i = 0; i < numberOfDots; i++) {
+            int x = random.nextInt((int) boardPane.getPrefWidth() - 40) + 20;
+            int y = random.nextInt((int) boardPane.getPrefHeight() - 40) + 20;
+            Circle dot = new Circle(x, y, 10, Color.BLACK);
+            dots.add(dot);
+            boardPane.getChildren().add(dot);
+
+            dot.setOnMouseClicked(event -> handleDotClick(dot));
+        }
+    }
+
+    private void handleDotClick(Circle dot) {
+        if (previousDot == null) {
+            if (isPlayerBlueTurn && !redConnections.containsKey(dot)) {
+                previousDot = dot;
+                previousDot.setFill(Color.BLUE);
+            } else if (!isPlayerBlueTurn && !blueConnections.containsKey(dot)) {
+                previousDot = dot;
+                previousDot.setFill(Color.RED);
+            } else
+                showAlert("Invalid Move", "You can only start from your own paths or unconnected dots!");
+        } else {
+            if (isPlayerBlueTurn) {
+                if (isValidMove(blueConnections, redConnections, previousDot, dot)) {
+                    addConnection(blueConnections, previousDot, dot, Color.BLUE);
+                    double lineLength = calculateLineLength(previousDot, dot);
+                    blueScore += lineLength;
+                    updateScores();
                 } else {
-                    // Second dot is clicked
-                    if (isPlayerBlueTurn) {
-                        if (isValidMove(blueConnections, redConnections, previousDot, dot)) {
-                            addConnection(blueConnections, previousDot, dot);
-                            double lineLength = calculateLineLength(previousDot, dot);
-                            blueScore += lineLength; // Update red player's score
-                            lines.add(new Line(previousDot, dot, Color.BLUE));
-                            updateScores();
-                        } else {
-                            showAlert("Invalid Move", "You can only connect to your own paths or start a new path!");
-                            previousDot = null; // Reset previousDot after an invalid move
-                            return; // Exit early to prevent further processing
-                        }
-                    } else {
-                        if (isValidMove(redConnections, blueConnections, previousDot, dot)) {
-                            addConnection(redConnections, previousDot, dot);
-                            double lineLength = calculateLineLength(previousDot, dot);
-                            redScore += lineLength; // Update red player's score
-                            lines.add(new Line(previousDot, dot, Color.RED));
-                            updateScores();
-                        } else {
-                            showAlert("Invalid Move", "You can only connect to your own paths or start a new path!");
-                            previousDot = null; // Reset previousDot after an invalid move
-                            return; // Exit early to prevent further processing
-                        }
-                    }
-
-                    // Switch player turn and reset previousDot
-                    isPlayerBlueTurn = !isPlayerBlueTurn;
+                    showAlert("Invalid Move", "You can only connect to your own paths or start a new path!");
+                    previousDot.setFill(Color.BLACK);
                     previousDot = null;
-
-                    drawCanvas(canvas);
-                    if(blueConnections.size() + redConnections.size() == numberOfDots) {
-                        if(blueScore < redScore)
-                            showAlert("Game Over", "Blue wins!");
-                        else if(redScore < blueScore)
-                            showAlert("Game Over", "Red wins!");
-                        else showAlert("Game Over", "Draw!");
-                        return;
-                    }
-                    // Redraw the canvas
+                    return;
+                }
+            } else {
+                if (isValidMove(redConnections, blueConnections, previousDot, dot)) {
+                    addConnection(redConnections, previousDot, dot, Color.RED);
+                    double lineLength = calculateLineLength(previousDot, dot);
+                    redScore += lineLength;
+                    previousDot.setFill(Color.BLACK);
+                    updateScores();
+                } else {
+                    showAlert("Invalid Move", "You can only connect to your own paths or start a new path!");
+                    previousDot.setFill(Color.BLACK);
+                    previousDot = null;
                     return;
                 }
             }
+
+            if(blueConnections.size() + redConnections.size() == numberOfDots) {
+                if(blueScore < redScore)
+                    showAlert("Game Over", "Blue wins!");
+                else if(redScore < blueScore)
+                    showAlert("Game Over", "Red wins!");
+                else showAlert("Game Over", "Draw!");
+                return;
+            }
+
+            isPlayerBlueTurn = !isPlayerBlueTurn;
+            previousDot.setFill(Color.BLACK);
+            previousDot = null;
         }
     }
 
-    private void updateScores() {
-        blueScoreLabel.setText(String.format("Blue Score: %.1f", blueScore));
-        redScoreLabel.setText(String.format("Red Score: %.1f", redScore));
-    }
-
-    private boolean isValidMove(Map<Dot, List<Dot>> playerConnections, Map<Dot, List<Dot>> opponentConnections, Dot start, Dot end) {
+    private boolean isValidMove(Map<Circle, List<Circle>> playerConnections, Map<Circle, List<Circle>> opponentConnections, Circle start, Circle end) {
         if(!playerConnections.isEmpty())
             if(!playerConnections.containsKey(start) && !playerConnections.containsKey(end)) {
                 return false;
@@ -208,87 +238,33 @@ public class HelloApplication extends Application implements Serializable {
         return !opponentConnections.containsKey(start) && !opponentConnections.containsKey(end);
     }
 
-    private double calculateLineLength(Dot start, Dot end) {
-        return Math.sqrt(Math.pow(end.getX() - start.getX(), 2) + Math.pow(end.getY() - start.getY(), 2));
-    }
-
-    private void addConnection(Map<Dot, List<Dot>> connections, Dot start, Dot end) {
+    private void addConnection(Map<Circle, List<Circle>> connections, Circle start, Circle end, Color color) {
         connections.putIfAbsent(start, new ArrayList<>());
         connections.putIfAbsent(end, new ArrayList<>());
         connections.get(start).add(end);
         connections.get(end).add(start);
+
+        Line line = new Line(start.getCenterX(), start.getCenterY(), end.getCenterX(), end.getCenterY());
+        line.setStroke(color);
+        line.setStrokeWidth(2);
+        lines.add(line);
+        boardPane.getChildren().add(line);
     }
 
-    private void drawCanvas(Canvas canvas) {
-        GraphicsContext gc = canvas.getGraphicsContext2D();
-        gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+    private double calculateLineLength(Circle start, Circle end) {
+        return Math.sqrt(Math.pow(end.getCenterX() - start.getCenterX(), 2) + Math.pow(end.getCenterY() - start.getCenterY(), 2));
+    }
 
-        // Draw dots
-        for (Dot dot : dots) {
-            gc.setFill(Color.BLACK);
-            gc.fillOval(dot.getX() - 5, dot.getY() - 5, 10, 10);
-        }
-
-        // Draw lines
-        for (Line line : lines) {
-            gc.setStroke(line.getColor());
-            gc.setLineWidth(2);
-            gc.strokeLine(line.getStart().getX(), line.getStart().getY(),
-                    line.getEnd().getX(), line.getEnd().getY());
-        }
+    private void updateScores() {
+        blueScoreLabel.setText(String.format("Blue Score: %.1f", blueScore));
+        redScoreLabel.setText(String.format("Red Score: %.1f", redScore));
     }
 
     private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
-    }
-
-    static class Dot {
-        private final int x;
-        private final int y;
-
-        public Dot(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        public int getX() {
-            return x;
-        }
-
-        public int getY() {
-            return y;
-        }
-
-        public boolean isClicked(double mouseX, double mouseY) {
-            return Math.sqrt(Math.pow(mouseX - x, 2) + Math.pow(mouseY - y, 2)) <= 10;
-        }
-    }
-
-    static class Line {
-        private final Dot start;
-        private final Dot end;
-        private final Color color;
-
-        public Line(Dot start, Dot end, Color color) {
-            this.start = start;
-            this.end = end;
-            this.color = color;
-        }
-
-        public Dot getStart() {
-            return start;
-        }
-
-        public Dot getEnd() {
-            return end;
-        }
-
-        public Color getColor() {
-            return color;
-        }
     }
 }
