@@ -10,6 +10,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
@@ -38,14 +39,53 @@ public class Game extends Application implements Serializable {
 
     private transient Pane boardPane;
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+    // New fields for AI
+    private boolean isPlayerBlueAI = false;
+    private boolean isPlayerRedAI = false;
+    private int blueAIDifficulty = 1; // 1 = Easy, 3 = Hard
+    private int redAIDifficulty = 1;
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Dot Game");
 
+        // Create the initial configuration screen
+        BorderPane configScreen = new BorderPane();
+        Scene configScene = new Scene(configScreen, 800, 700);
+
+        Label welcomeLabel = new Label("Welcome to Dot Game");
+        welcomeLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+        configScreen.setTop(welcomeLabel);
+        BorderPane.setAlignment(welcomeLabel, Pos.CENTER);
+
+        VBox optionsBox = new VBox(20);
+        optionsBox.setAlignment(Pos.CENTER);
+        Label modeLabel = new Label("Select Game Mode:");
+        modeLabel.setStyle("-fx-font-size: 18px;");
+        Button twoPlayersButton = new Button("2 Players");
+        Button playWithAIButton = new Button("Play with AI");
+
+        optionsBox.getChildren().addAll(modeLabel, twoPlayersButton, playWithAIButton);
+        configScreen.setCenter(optionsBox);
+
+        primaryStage.setScene(configScene);
+        primaryStage.show();
+
+        // Event handlers for buttons
+        twoPlayersButton.setOnAction(event -> {
+            isPlayerBlueAI = false;
+            isPlayerRedAI = false;
+            showGameBoard(primaryStage);
+        });
+
+        playWithAIButton.setOnAction(event -> {
+            isPlayerBlueAI = false; // For the purpose of this example, Player 1 is human
+            isPlayerRedAI = true;  // Player 2 is AI
+            redAIDifficulty = 2;   // Default AI difficulty
+            showGameBoard(primaryStage);
+        });
+    }
+    private void showGameBoard(Stage primaryStage) {
         BorderPane root = new BorderPane();
 
         HBox configPanel = createConfigurationPanel(primaryStage);
@@ -64,11 +104,11 @@ public class Game extends Application implements Serializable {
 
         generateDots();
     }
-
     private HBox createConfigurationPanel(Stage stage) {
         Label label = new Label("Number of Dots:");
         TextField textField = new TextField(String.valueOf(numberOfDots));
         Button newGameButton = new Button("New Game");
+        CheckBox playWithAIBox = new CheckBox("Play with AI");
 
         newGameButton.setOnAction(e -> {
             try {
@@ -85,17 +125,20 @@ public class Game extends Application implements Serializable {
                 isPlayerBlueTurn = true;
                 boardPane.getChildren().clear(); // Clear the board
                 generateDots();
+
+                // Set AI mode based on the checkbox
+                isPlayerBlueAI = false; // Player 1 is always human
+                isPlayerRedAI = playWithAIBox.isSelected(); // Player 2 is AI only if checkbox is checked
             } catch (NumberFormatException ex) {
                 showAlert("Invalid Input", "Please enter a valid number.");
             }
         });
 
-        HBox configPanel = new HBox(10, blueScoreLabel, label, textField, newGameButton, redScoreLabel);
+        HBox configPanel = new HBox(10, blueScoreLabel, label, textField, newGameButton, playWithAIBox, redScoreLabel);
         configPanel.setPadding(new Insets(10));
         configPanel.setAlignment(Pos.CENTER);
         return configPanel;
     }
-
     private HBox createControlPanel(Stage stage) {
         Button loadButton = new Button("Load");
         Button saveButton = new Button("Save");
@@ -178,58 +221,145 @@ public class Game extends Application implements Serializable {
     }
 
     private void handleDotClick(Circle dot) {
-        if (previousDot == null) {
-            if (isPlayerBlueTurn && !redConnections.containsKey(dot)) {
-                previousDot = dot;
-                previousDot.setFill(Color.BLUE);
-            } else if (!isPlayerBlueTurn && !blueConnections.containsKey(dot)) {
-                previousDot = dot;
-                previousDot.setFill(Color.RED);
-            } else
-                showAlert("Invalid Move", "You can only start from your own paths or unconnected dots!");
+        if (isPlayerBlueTurn && isPlayerBlueAI) {
+            performAIMove(blueConnections, redConnections, blueAIDifficulty, Color.BLUE);
+        } else if (!isPlayerBlueTurn && isPlayerRedAI) {
+            performAIMove(redConnections, blueConnections, redAIDifficulty, Color.RED);
         } else {
-            if (isPlayerBlueTurn) {
-                if (isValidMove(blueConnections, redConnections, previousDot, dot)) {
-                    addConnection(blueConnections, previousDot, dot, Color.BLUE);
-                    double lineLength = calculateLineLength(previousDot, dot);
-                    blueScore += lineLength;
-                    updateScores();
-                } else {
-                    showAlert("Invalid Move", "You can only connect to your own paths or start a new path!");
-                    previousDot.setFill(Color.BLACK);
-                    previousDot = null;
-                    return;
-                }
+            // Existing human player logic
+            if (previousDot == null) {
+                if (isPlayerBlueTurn && !redConnections.containsKey(dot)) {
+                    previousDot = dot;
+                    previousDot.setFill(Color.BLUE);
+                } else if (!isPlayerBlueTurn && !blueConnections.containsKey(dot)) {
+                    previousDot = dot;
+                    previousDot.setFill(Color.RED);
+                } else
+                    showAlert("Invalid Move", "You can only start from your own paths or unconnected dots!");
             } else {
-                if (isValidMove(redConnections, blueConnections, previousDot, dot)) {
-                    addConnection(redConnections, previousDot, dot, Color.RED);
-                    double lineLength = calculateLineLength(previousDot, dot);
-                    redScore += lineLength;
-                    previousDot.setFill(Color.BLACK);
-                    updateScores();
+                if (isPlayerBlueTurn) {
+                    if (isValidMove(blueConnections, redConnections, previousDot, dot)) {
+                        addConnection(blueConnections, previousDot, dot, Color.BLUE);
+                        double lineLength = calculateLineLength(previousDot, dot);
+                        blueScore += lineLength;
+                        updateScores();
+                    } else {
+                        showAlert("Invalid Move", "You can only connect to your own paths or start a new path!");
+                        previousDot.setFill(Color.BLACK);
+                        previousDot = null;
+                        return;
+                    }
                 } else {
-                    showAlert("Invalid Move", "You can only connect to your own paths or start a new path!");
-                    previousDot.setFill(Color.BLACK);
-                    previousDot = null;
+                    if (isValidMove(redConnections, blueConnections, previousDot, dot)) {
+                        addConnection(redConnections, previousDot, dot, Color.RED);
+                        double lineLength = calculateLineLength(previousDot, dot);
+                        redScore += lineLength;
+                        previousDot.setFill(Color.BLACK);
+                        updateScores();
+                    } else {
+                        showAlert("Invalid Move", "You can only connect to your own paths or start a new path!");
+                        previousDot.setFill(Color.BLACK);
+                        previousDot = null;
+                        return;
+                    }
+                }
+
+                if (blueConnections.size() + redConnections.size() == numberOfDots) {
+                    if (blueScore < redScore)
+                        showAlert("Game Over", "Blue wins!");
+                    else if (redScore < blueScore)
+                        showAlert("Game Over", "Red wins!");
+                    else showAlert("Game Over", "Draw!");
                     return;
                 }
-            }
 
-            if(blueConnections.size() + redConnections.size() == numberOfDots) {
-                if(blueScore < redScore)
-                    showAlert("Game Over", "Blue wins!");
-                else if(redScore < blueScore)
-                    showAlert("Game Over", "Red wins!");
-                else showAlert("Game Over", "Draw!");
-                return;
+                isPlayerBlueTurn = !isPlayerBlueTurn;
+                previousDot.setFill(Color.BLACK);
+                previousDot = null;
             }
-
-            isPlayerBlueTurn = !isPlayerBlueTurn;
-            previousDot.setFill(Color.BLACK);
-            previousDot = null;
         }
     }
+    private void performAIMove(Map<Circle, List<Circle>> aiConnections, Map<Circle, List<Circle>> opponentConnections, int difficulty, Color color) {
+        // Generate spanning trees
+        List<SpanningTree> trees = generateSpanningTrees(aiConnections);
 
+        // Handle case where no spanning trees are generated
+        if (trees.isEmpty()) {
+            showAlert("Game Over", "No valid moves left for the AI.");
+            return;
+        }
+
+        SpanningTree chosenTree;
+
+        // Select tree based on difficulty
+        if (difficulty == 3) { // Hard
+            chosenTree = trees.get(0);
+        } else if (difficulty == 1) { // Easy
+            chosenTree = trees.get(trees.size() - 1);
+        } else { // Medium
+            chosenTree = trees.get(trees.size() / 2);
+        }
+
+        // Select a single connection from the chosen tree
+        if (!chosenTree.getConnections().isEmpty()) {
+            Connection chosenConnection = chosenTree.getConnections().get(0); // Choose the first connection
+            addConnection(aiConnections, chosenConnection.start, chosenConnection.end, color);
+        }
+
+        updateScores();
+        isPlayerBlueTurn = !isPlayerBlueTurn; // Switch turn to human player
+    }
+    private List<SpanningTree> generateSpanningTrees(Map<Circle, List<Circle>> connections) {
+        // Example implementation of a simple spanning tree generator
+        List<SpanningTree> trees = new ArrayList<>();
+        Set<Circle> visited = new HashSet<>();
+
+        for (Circle dot : dots) {
+            if (!visited.contains(dot)) {
+                SpanningTree tree = new SpanningTree();
+                dfs(dot, visited, tree, connections);
+                trees.add(tree);
+            }
+        }
+
+        // Sort trees by their "cost" (e.g., total connection lengths)
+        trees.sort(Comparator.comparingDouble(SpanningTree::getCost));
+        return trees;
+    }
+    private void dfs(Circle current, Set<Circle> visited, SpanningTree tree, Map<Circle, List<Circle>> connections) {
+        visited.add(current);
+
+        for (Circle neighbor : dots) {
+            if (!visited.contains(neighbor) && isValidMove(connections, new HashMap<>(), current, neighbor)) {
+                tree.getConnections().add(new Connection(current, neighbor));
+                dfs(neighbor, visited, tree, connections);
+            }
+        }
+    }
+    private static class SpanningTree {
+        private final List<Connection> connections = new ArrayList<>();
+
+        public List<Connection> getConnections() {
+            return connections;
+        }
+
+        public double getCost() {
+            // Calculate the cost of the tree (e.g., total length of all connections)
+            return connections.stream()
+                    .mapToDouble(conn -> Math.sqrt(Math.pow(conn.start.getCenterX() - conn.end.getCenterX(), 2)
+                            + Math.pow(conn.start.getCenterY() - conn.end.getCenterY(), 2)))
+                    .sum();
+        }
+    }
+    private static class Connection {
+        private final Circle start;
+        private final Circle end;
+
+        public Connection(Circle start, Circle end) {
+            this.start = start;
+            this.end = end;
+        }
+    }
     private boolean isValidMove(Map<Circle, List<Circle>> playerConnections, Map<Circle, List<Circle>> opponentConnections, Circle start, Circle end) {
         if(!playerConnections.isEmpty())
             if(!playerConnections.containsKey(start) && !playerConnections.containsKey(end)) {
