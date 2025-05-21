@@ -28,14 +28,16 @@ public class GameClient {
             while (true) {
                 System.out.print("> ");
                 command = scanner.nextLine();
-                out.println(command);
-                String response = in.readLine();
-                if(response.equals("Server stopped")) {
-                    System.out.println(response);
+                if ("exit".equalsIgnoreCase(command)) {
+                    System.out.println("Exiting client...");
                     break;
                 }
-                else
-                    System.out.println("Server response: " + response);
+                out.println(command);
+                String response = null;
+                System.out.print("Server response: ");
+                while ((response = in.readLine()) != null && !response.isEmpty()) {
+                    System.out.println(response);
+                }
             }
         } catch (IOException e) {
             System.err.println("Error connecting to the server: " + e.getMessage());

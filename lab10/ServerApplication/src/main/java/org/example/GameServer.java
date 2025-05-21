@@ -9,9 +9,15 @@ import static java.lang.System.exit;
 public class GameServer {
     private int port;
     private boolean running = true;
+    private GameManager gameManager;
 
     public GameServer(int port) {
         this.port = port;
+        this.gameManager = new GameManager();
+    }
+
+    public GameManager getGameManager() {
+        return gameManager;
     }
 
     public void start() {
@@ -30,7 +36,6 @@ public class GameServer {
     public void stop() {
         running = false;
         System.out.println("Game Server is stopping...");
-        exit(0);
+        System.exit(0);
     }
-
 }
