@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab12</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body style="font-family: 'Courier 10 Pitch'">
+<h1 style="text-align: center">City List</h1>
+<form id="cityForm">
+    <label for="name">City Name:</label>
+    <input type="text" id="name" name="name" required><br><br>
+    <label for="country">City Country:</label>
+    <input type="text" id="country" name="country" required><br><br>
+    <label for="capital">Is city the capital?:</label>
+    <input type="checkbox" id="capital" name="capital" value="true"><br><br>
+    <label for="latitude">City Latitude:</label>
+    <input type="number" id="latitude" name="latitude" required step="any"><br><br>
+    <label for="longitude">City Longitude:</label>
+    <input type="number" id="longitude" name="longitude" required step="any"><br><br>
+    <button type="submit">Submit</button>
+</form>
+<br>
+<div id="result"></div>
+<br>
+<br>
+
+<button onclick="fetchCities()">Get Cities</button>
+<ul id="cityList"></ul>
+
+
+<script>
+    function fetchCities() {
+        fetch('/cities/list')
+            .then(response => response.json())
+            .then(data => {
+                const documentList = document.getElementById('cityList');
+                documentList.innerHTML = '';
+                data.forEach(city => {
+                    const li = document.createElement('li');
+                    li.textContent = (String) ("City with id: " + city.id +", name: " + city.name + ", country: " + city.country + ", capital: " + city.capital + ", latitude: " + city.latitude + ", longitude: " + city.longitude);
+                    documentList.appendChild(li);
+                });
+            });
+    }
+    document.getElementById('cityForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const data = {
+            name: form.name.value,
+            country: form.country.value,
+            capital: form.capital.checked,
+            latitude: parseFloat(form.latitude.value),
+            longitude: parseFloat(form.longitude.value)
+        };
+
+        fetch('/cities/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(result => result.text())
+            .then(message => document.getElementById('result').innerText = message)
+            .catch(error => {
+                document.getElementById('result').innerText = 'Submission failed: ' + error.message;
+            });
+    });
+</script>
+
+</body>
+</html>

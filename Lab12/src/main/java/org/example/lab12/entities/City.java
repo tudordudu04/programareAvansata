@@ -11,14 +11,29 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "continents")
-public class Continent {
+@Table(name = "cities")
+public class City{
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotBlank
+    @Column(name = "country")
+    private String country;
+
+    @NotBlank
     @Column(name = "name")
     private String name;
+
+    @Column(name = "capital")
+    private boolean capital;
+
+    @NotNull
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @NotNull
+    @Column(name = "longitude")
+    private Double longitude;
 }
