@@ -2,14 +2,12 @@ package org.example.lab12.controllers;
 
 import org.example.lab12.entities.Country;
 import org.example.lab12.services.CountryService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequestMapping("/countries")
 public class CountryController {
     private final CountryService countryService;
     public CountryController(CountryService countryService) {

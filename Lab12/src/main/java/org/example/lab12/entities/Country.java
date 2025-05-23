@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "countries")
 public class Country {
     @Id
-    @NotBlank
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
