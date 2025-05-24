@@ -24,7 +24,6 @@ public class Country {
     @Column(name = "code")
     private String code;
 
-    @NotBlank
     @Column(name = "continent")
     private String continent;
 
