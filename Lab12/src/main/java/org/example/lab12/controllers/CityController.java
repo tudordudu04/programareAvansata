@@ -5,18 +5,24 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.lab12.entities.City;
 import org.example.lab12.services.CityService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
-@RestController
+@Controller
 @RequestMapping("/cities")
 @Tag(name = "City Operations", description = "Operations related to cities")
 public class CityController {
     private final CityService cityService;
     public CityController(CityService cityService) {
         this.cityService = cityService;
+    }
+
+    @GetMapping
+    public String html() {
+        return "cities";
     }
 
     @GetMapping("/list")
